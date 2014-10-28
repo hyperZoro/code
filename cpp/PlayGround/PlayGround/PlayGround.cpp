@@ -10,7 +10,14 @@
 int main()
 {
 	std::vector<double> myVector;
-	myVector = fnCubicHermesInterpolation(std::vector<double>(1, 0.0), std::vector<double>(2, 10.0), std::vector<double>(2,100.0));
+	try{
+		myVector = fnCubicHermesInterpolation(std::vector<double>(1, 0.0), std::vector<double>(2, 10.0), std::vector<double>(3, 100.0));
+	}
+	catch (int e)
+	{
+		std::cout << e << "\n";
+		return 0;
+	}
 
 
 	//display myVector
