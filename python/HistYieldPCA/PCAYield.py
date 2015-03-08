@@ -59,9 +59,15 @@ PC1 = res[1][:,1570]
 PC2 = res[1][:,1569]
 PC3 = res[1][:,1568]
 
+mxPC = res[1][:,1568:1571]
+
+PC =np.doc(logReturn, mxPC)
+
 plt.figure();
 plt.plot(ordinateUnion,PC1,color='r');
 plt.plot(ordinateUnion,PC2,color='b');
 plt.plot(ordinateUnion,PC3,color='g');
 plt.show()
+
+
 #del EURYield
