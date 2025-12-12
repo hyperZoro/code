@@ -47,23 +47,36 @@ $$ D = \int_{0.5}^{1} \Phi^{-1}(u) \, du = \phi(0) = \frac{1}{\sqrt{2\pi}} \appr
 
 ### 2.2 The Numerator (Weighted Contributions)
 
-The piecewise function $S(u)$ can be decomposed into contributions attached to each specific factor ($f_{65}, f_{80}, f_{95}$). Because the interpolation is linear in probability space $u$, we can rearrange the numerator into a weighted sum form:
+The piecewise function $S(u)$ is defined as:
 
-$$ \text{Numerator} = f_{65} \cdot \Omega_{65} + f_{80} \cdot \Omega_{80} + f_{95} \cdot \Omega_{95} $$
+*   **Region 1 ($0.50 < u \le 0.65$)**: $S(u) = f_{65}$
+*   **Region 2 ($0.65 < u \le 0.80$)**: $S(u) = f_{65} + (f_{80} - f_{65}) \frac{u - 0.65}{0.15}$
+*   **Region 3 ($0.80 < u \le 0.95$)**: $S(u) = f_{80} + (f_{95} - f_{80}) \frac{u - 0.80}{0.15}$
+*   **Region 4 ($0.95 < u \le 1.00$)**: $S(u) = f_{95}$
 
-Where $\Omega_k$ represents the integral of the probability mass influenced by that specific factor.
+To find the contribution of each factor ($f_{65}, f_{80}, f_{95}$), we rearrange the interpolation terms in Regions 2 and 3.
+
+**In Region 2:**
+$$ S(u) = f_{65} \left( 1 - \frac{u - 0.65}{0.15} \right) + f_{80} \left( \frac{u - 0.65}{0.15} \right) $$
+$$ S(u) = f_{65} \underbrace{\left( \frac{0.80 - u}{0.15} \right)}_{\text{Fading } f_{65}} + f_{80} \underbrace{\left( \frac{u - 0.65}{0.15} \right)}_{\text{Rising } f_{80}} $$
+
+**In Region 3:**
+$$ S(u) = f_{80} \left( 1 - \frac{u - 0.80}{0.15} \right) + f_{95} \left( \frac{u - 0.80}{0.15} \right) $$
+$$ S(u) = f_{80} \underbrace{\left( \frac{0.95 - u}{0.15} \right)}_{\text{Fading } f_{80}} + f_{95} \underbrace{\left( \frac{u - 0.80}{0.15} \right)}_{\text{Rising } f_{95}} $$
+
+Now, we group the integrals by factor:
 
 #### Weight for $f_{65}$
-$f_{65}$ applies fully from 0.50 to 0.65, and fades linearly from 1 to 0 between 0.65 and 0.80.
-$$ \Omega_{65} = \underbrace{\int_{0.50}^{0.65} \Phi^{-1}(u)du}_{\text{Full}} + \underbrace{\int_{0.65}^{0.80} \left( \frac{0.80 - u}{0.15} \right) \Phi^{-1}(u)du}_{\text{Fading}} $$
+$f_{65}$ is the sole term in Region 1, and the "Fading" term in Region 2.
+$$ \Omega_{65} = \underbrace{\int_{0.50}^{0.65} \Phi^{-1}(u)du}_{\text{Region 1 (Full)}} + \underbrace{\int_{0.65}^{0.80} \left( \frac{0.80 - u}{0.15} \right) \Phi^{-1}(u)du}_{\text{Region 2 (Fading)}} $$
 
 #### Weight for $f_{80}$
-$f_{80}$ rises linearly from 0 to 1 between 0.65 and 0.80, and fades linearly from 1 to 0 between 0.80 and 0.95.
-$$ \Omega_{80} = \underbrace{\int_{0.65}^{0.80} \left( \frac{u - 0.65}{0.15} \right) \Phi^{-1}(u)du}_{\text{Rising}} + \underbrace{\int_{0.80}^{0.95} \left( \frac{0.95 - u}{0.15} \right) \Phi^{-1}(u)du}_{\text{Fading}} $$
+$f_{80}$ is the "Rising" term in Region 2, and the "Fading" term in Region 3.
+$$ \Omega_{80} = \underbrace{\int_{0.65}^{0.80} \left( \frac{u - 0.65}{0.15} \right) \Phi^{-1}(u)du}_{\text{Region 2 (Rising)}} + \underbrace{\int_{0.80}^{0.95} \left( \frac{0.95 - u}{0.15} \right) \Phi^{-1}(u)du}_{\text{Region 3 (Fading)}} $$
 
 #### Weight for $f_{95}$
-$f_{95}$ rises linearly from 0 to 1 between 0.80 and 0.95, and applies fully from 0.95 to 1.00.
-$$ \Omega_{95} = \underbrace{\int_{0.80}^{0.95} \left( \frac{u - 0.80}{0.15} \right) \Phi^{-1}(u)du}_{\text{Rising}} + \underbrace{\int_{0.95}^{1.00} \Phi^{-1}(u)du}_{\text{Full}} $$
+$f_{95}$ is the "Rising" term in Region 3, and the sole term in Region 4.
+$$ \Omega_{95} = \underbrace{\int_{0.80}^{0.95} \left( \frac{u - 0.80}{0.15} \right) \Phi^{-1}(u)du}_{\text{Region 3 (Rising)}} + \underbrace{\int_{0.95}^{1.00} \Phi^{-1}(u)du}_{\text{Region 4 (Full)}} $$
 
 ---
 
@@ -93,7 +106,62 @@ $$ f \approx 0.1558 \cdot f_{65} + 0.3060 \cdot f_{80} + 0.5382 \cdot f_{95} $$
 
 ---
 
-## Appendix: Python Implementation
+---
+
+## 4. Interpretation of Weights
+
+Why does $f_{95}$ carry the highest weight (~54%) despite covering only the top 5% of the probability space? This is due to the **magnitude of the values in the tail**.
+
+### 4.1 Weighting by "Value", not just Probability
+The goal is to match the **Expected Positive Value (EPV)**. The EPV is a sum of (Probability $\times$ Magnitude).
+*   **Near the median (50-65%)**: The probability mass is large (15% width), but the values of a standard normal distribution are small (close to 0).
+*   **In the tail (>95%)**: The probability mass is small (5% width), but the values are **very large** (> 1.65).
+
+### 4.2 The "Leverage" of the Tail
+Because the standard normal distribution is convex in the tail, the extreme values contribute disproportionately to the total expected value.
+*   **$f_{65}$** applies to the "body" of the distribution where values are small.
+*   **$f_{95}$** applies to the "extreme tail" where the values are largest.
+
+### Summary Table
+
+| Region | Probability Width | Typical Value Magnitude | Contribution to Total Value |
+| :--- | :--- | :--- | :--- |
+| **50% - 65%** | **15%** (Large) | **Low** (~0.0 to 0.4) | Small (~16% weight) |
+| **95% - 100%** | **5%** (Small) | **High** (> 1.65) | **Huge (~54% weight)** |
+
+Thus, $f_{95}$ is the most critical factor because it scales the part of the distribution that contributes the most to the final expected positive value.
+
+---
+ 
+ ## Appendix A: Analytical Evaluation of Integrals
+ 
+ The weights $\Omega_k$ involve integrals of the form $\int \Phi^{-1}(u) du$ and $\int u \Phi^{-1}(u) du$. These can be evaluated analytically using integration by substitution and integration by parts.
+ 
+ Let $x = \Phi^{-1}(u)$, which implies $u = \Phi(x)$ and $du = \phi(x) dx$.
+ 
+ ### A.1 Integral of Quantile Function
+ $$ I_1 = \int \Phi^{-1}(u) du $$
+ Substitute $u = \Phi(x)$:
+ $$ I_1 = \int x \phi(x) dx $$
+ Since $\phi'(x) = -x \phi(x)$, we have:
+ $$ I_1 = -\phi(x) + C = -\phi(\Phi^{-1}(u)) + C $$
+ 
+ ### A.2 Integral of Weighted Quantile Function
+ $$ I_2 = \int u \Phi^{-1}(u) du $$
+ Substitute $u = \Phi(x)$:
+ $$ I_2 = \int \Phi(x) x \phi(x) dx $$
+ Use integration by parts with $U = \Phi(x)$ and $dV = x \phi(x) dx$.
+ Then $dU = \phi(x) dx$ and $V = -\phi(x)$.
+ $$ \int \Phi(x) x \phi(x) dx = -\Phi(x)\phi(x) - \int (-\phi(x)) \phi(x) dx $$
+ $$ = -\Phi(x)\phi(x) + \int \phi(x)^2 dx $$
+ The term $\int \phi(x)^2 dx$ involves the integral of the square of the Gaussian PDF, which relates to the CDF of a normal distribution with variance $1/2$.
+ $$ \int \phi(x)^2 dx = \frac{1}{2\sqrt{\pi}} \Phi(x\sqrt{2}) $$
+ Thus:
+ $$ I_2 = -u \phi(\Phi^{-1}(u)) + \frac{1}{2\sqrt{\pi}} \Phi(\Phi^{-1}(u)\sqrt{2}) + C $$
+ 
+ ---
+ 
+ ## Appendix B: Python Implementation
 
 You can verify the weights using the following Python script.
 
@@ -143,28 +211,3 @@ if __name__ == "__main__":
     w65, w80, w95 = calculate_weights()
     print(f"Weights:\nfw_65: {w65:.4%}\nfw_80: {w80:.4%}\nfw_95: {w95:.4%}")
 ```
-
----
-
-## 4. Interpretation of Weights
-
-Why does $f_{95}$ carry the highest weight (~54%) despite covering only the top 5% of the probability space? This is due to the **magnitude of the values in the tail**.
-
-### 4.1 Weighting by "Value", not just Probability
-The goal is to match the **Expected Positive Value (EPV)**. The EPV is a sum of (Probability $\times$ Magnitude).
-*   **Near the median (50-65%)**: The probability mass is large (15% width), but the values of a standard normal distribution are small (close to 0).
-*   **In the tail (>95%)**: The probability mass is small (5% width), but the values are **very large** (> 1.65).
-
-### 4.2 The "Leverage" of the Tail
-Because the standard normal distribution is convex in the tail, the extreme values contribute disproportionately to the total expected value.
-*   **$f_{65}$** applies to the "body" of the distribution where values are small.
-*   **$f_{95}$** applies to the "extreme tail" where the values are largest.
-
-### Summary Table
-
-| Region | Probability Width | Typical Value Magnitude | Contribution to Total Value |
-| :--- | :--- | :--- | :--- |
-| **50% - 65%** | **15%** (Large) | **Low** (~0.0 to 0.4) | Small (~16% weight) |
-| **95% - 100%** | **5%** (Small) | **High** (> 1.65) | **Huge (~54% weight)** |
-
-Thus, $f_{95}$ is the most critical factor because it scales the part of the distribution that contributes the most to the final expected positive value.
