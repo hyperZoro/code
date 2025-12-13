@@ -62,6 +62,6 @@ plt.ylim(min(f65, f80, f95) - 0.2, max(f65, f80, f95) + 0.2)
 plt.legend()
 
 # Save the plot
-output_path = os.path.join('doc', 'interpolation_function.png')
+output_path = os.path.join('pic', 'interpolation_function.png')
 plt.savefig(output_path, dpi=300, bbox_inches='tight')
 print(f"Plot saved to {output_path}")

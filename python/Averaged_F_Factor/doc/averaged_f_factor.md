@@ -19,7 +19,7 @@ The scaling function $S(u)$ (where $u$ is the cumulative probability) is defined
 3.  **$0.80 < u \le 0.95$**: Linear interpolation between $f_{80}$ and $f_{95}$.
 4.  **$0.95 < u \le 1.00$**: Constant factor $f_{95}$.
 
-![Interpolation Function S(u)](interpolation_function.png)
+![Interpolation Function S(u)](../pic/interpolation_function.png)
 *Figure 1: Visualization of the piecewise interpolation function $S(u)$ in percentage space. The function transitions from $f_{65}$ to $f_{80}$ and then to $f_{95}$ using linear interpolation, providing a smooth scaling factor across the probability distribution.*
 
 **Objective:** Find a single constant scale factor $f$ such that the **Expected Positive Value (EPV)** of the distribution scaled by $f$ equals the EPV of the distribution scaled by the piecewise function $S(u)$.
@@ -93,16 +93,16 @@ Computing the integrals numerically for a standard Normal distribution yields th
 
 | Factor | Weight ($w$) | Description |
 | :--- | :--- | :--- |
-| **$f_{65}$** | **15.58%** | Dominates the body (0.50-0.65), fades in tail. |
-| **$f_{80}$** | **30.60%** | Bridges the body and the extreme tail. |
-| **$f_{95}$** | **53.82%** | Dominates the extreme tail (>0.95) where values are largest. |
+| **$f_{65}$** | **17.07%** | Dominates the body (0.50-0.65), fades in tail. |
+| **$f_{80}$** | **32.50%** | Bridges the body and the extreme tail. |
+| **$f_{95}$** | **50.43%** | Dominates the extreme tail (>0.95) where values are largest. |
 | **Total** | **100.00%** | |
 
 ### 3.2 The Final Equation
 
-$$ f \approx 0.1558 \cdot f_{65} + 0.3060 \cdot f_{80} + 0.5382 \cdot f_{95} $$
+$$ f \approx 0.1707 \cdot f_{65} + 0.3250 \cdot f_{80} + 0.5043 \cdot f_{95} $$
 
-*Note: Even though the 95%+ region covers only 5% of the probability space, it accounts for nearly 54% of the scaling weight. This is due to the convexity of the distribution tail—the values in the extreme tail are significantly larger than those near the median, contributing more to the Expected Positive Value.*
+*Note: Even though the 95%+ region covers only 5% of the probability space, it accounts for over 50% of the scaling weight. This is due to the convexity of the distribution tail—the values in the extreme tail are significantly larger than those near the median, contributing more to the Expected Positive Value.*
 
 ---
 
@@ -123,13 +123,15 @@ Because the standard normal distribution is convex in the tail, the extreme valu
 *   **$f_{95}$** applies to the "extreme tail" where the values are largest.
 
 ### Summary Table
-
-| Region | Probability Width | Typical Value Magnitude | Contribution to Total Value |
-| :--- | :--- | :--- | :--- |
-| **50% - 65%** | **15%** (Large) | **Low** (~0.0 to 0.4) | Small (~16% weight) |
-| **95% - 100%** | **5%** (Small) | **High** (> 1.65) | **Huge (~54% weight)** |
-
-Thus, $f_{95}$ is the most critical factor because it scales the part of the distribution that contributes the most to the final expected positive value.
+ 
+ | Region | Probability Width | Typical Value Magnitude | Contribution to Total Value |
+ | :--- | :--- | :--- | :--- |
+-| **50% - 65%** | **15%** (Large) | **Low** (~0.0 to 0.4) | Small (~16% weight) |
+-| **95% - 100%** | **5%** (Small) | **High** (> 1.65) | **Huge (~54% weight)** |
++| **50% - 65%** | **15%** (Large) | **Low** (~0.0 to 0.4) | Small (~17% weight) |
++| **95% - 100%** | **5%** (Small) | **High** (> 1.65) | **Huge (~50% weight)** |
+ 
+ Thus, $f_{95}$ is the most critical factor because it scales the part of the distribution that contributes the most to the final expected positive value.
 
 ---
  
@@ -211,3 +213,59 @@ if __name__ == "__main__":
     w65, w80, w95 = calculate_weights()
     print(f"Weights:\nfw_65: {w65:.4%}\nfw_80: {w80:.4%}\nfw_95: {w95:.4%}")
 ```
+
+---
+
+## Appendix C: Alternative Derivation in Value Space ($x$)
+
+We can verify the results by performing the integration in value space ($x$) instead of probability space ($u$).
+
+### C.1 Formulation
+The Expected Positive Value with scaling is:
+$$ E = \int_{0}^{\infty} S(\Phi(x)) \cdot x \cdot \phi(x) \, dx $$
+
+Using the substitution $u = \Phi(x)$, the linear interpolation $S(u) = A + B \cdot u$ becomes $S(\Phi(x)) = A + B \cdot \Phi(x)$.
+Thus, the integrals we need to evaluate are of the form:
+1.  **Base Term**: $\int x \phi(x) dx$
+2.  **Weighted Term**: $\int \Phi(x) x \phi(x) dx$
+
+### C.2 Analytical Integrals
+From Appendix A, we know the antiderivatives:
+1.  $\int x \phi(x) dx = -\phi(x)$
+2.  $\int \Phi(x) x \phi(x) dx = -\Phi(x)\phi(x) + \frac{1}{2\sqrt{\pi}} \Phi(x\sqrt{2})$
+
+### C.3 Calculation of Weights
+We define the boundaries in $x$-space corresponding to the $u$-quantiles:
+*   $x_{50} = \Phi^{-1}(0.50) = 0$
+*   $x_{65} = \Phi^{-1}(0.65) \approx 0.385$
+*   $x_{80} = \Phi^{-1}(0.80) \approx 0.842$
+*   $x_{95} = \Phi^{-1}(0.95) \approx 1.645$
+*   $x_{100} = \infty$
+
+The total denominator is $D = \int_{0}^{\infty} x \phi(x) dx = \phi(0) \approx 0.3989$.
+
+#### Weight for $f_{65}$
+*   **Region 1 ($0 \to x_{65}$)**: Constant $f_{65}$.
+    $$ \text{Term}_1 = \int_{0}^{x_{65}} x \phi(x) dx = [-\phi(x)]_{0}^{x_{65}} = \phi(0) - \phi(x_{65}) \approx 0.02854 $$
+*   **Region 2 ($x_{65} \to x_{80}$)**: Fading $f_{65} \cdot \frac{0.80 - \Phi(x)}{0.15}$.
+    $$ \text{Term}_2 = \frac{1}{0.15} \left( 0.80 \int_{x_{65}}^{x_{80}} x \phi(x) dx - \int_{x_{65}}^{x_{80}} \Phi(x) x \phi(x) dx \right) \approx 0.03955 $$
+
+#### Weight for $f_{80}$
+*   **Region 2 ($x_{65} \to x_{80}$)**: Rising $f_{80} \cdot \frac{\Phi(x) - 0.65}{0.15}$.
+    $$ \text{Term}_3 = \frac{1}{0.15} \left( \int_{x_{65}}^{x_{80}} \Phi(x) x \phi(x) dx - 0.65 \int_{x_{65}}^{x_{80}} x \phi(x) dx \right) \approx 0.05089 $$
+*   **Region 3 ($x_{80} \to x_{95}$)**: Fading $f_{80} \cdot \frac{0.95 - \Phi(x)}{0.15}$.
+    $$ \text{Term}_4 = \frac{1}{0.15} \left( 0.95 \int_{x_{80}}^{x_{95}} x \phi(x) dx - \int_{x_{80}}^{x_{95}} \Phi(x) x \phi(x) dx \right) \approx 0.07879 $$
+
+#### Weight for $f_{95}$
+*   **Region 3 ($x_{80} \to x_{95}$)**: Rising $f_{95} \cdot \frac{\Phi(x) - 0.80}{0.15}$.
+    $$ \text{Term}_5 = \frac{1}{0.15} \left( \int_{x_{80}}^{x_{95}} \Phi(x) x \phi(x) dx - 0.80 \int_{x_{80}}^{x_{95}} x \phi(x) dx \right) \approx 0.09804 $$
+*   **Region 4 ($x_{95} \to \infty$)**: Constant $f_{95}$.
+    $$ \text{Term}_6 = \int_{x_{95}}^{\infty} x \phi(x) dx = [-\phi(x)]_{x_{95}}^{\infty} = \phi(x_{95}) \approx 0.10314 $$
+
+### C.4 Verification
+Summing these terms and dividing by $D$ yields the exact same weights as the $u$-space derivation:
+*   $w_{65} \approx 17.07\%$
+*   $w_{80} \approx 32.50\%$
+*   $w_{95} \approx 50.43\%$
+
+This confirms that the transformation is consistent.
