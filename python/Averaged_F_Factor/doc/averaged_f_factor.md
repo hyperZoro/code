@@ -162,6 +162,19 @@ The resulting weights for $\mu = 0.5$ and $\mu = -0.5$ are:
 ![Shifted Distributions](../pic/shifted_distributions.png)
 *Figure 3: Effect of scaling on distributions with non-zero means. Vertical dashed lines indicate the 65%, 80%, and 95% quantiles of the underlying distribution.*
 
+### 5.3 Numerical Verification
+We verified these coefficients using Monte Carlo simulations ($N=1,000,000$).
+
+**Case $\mu = 0.5$:**
+*   Analytical Factor: $f \approx 1.296$
+*   Simulated vs Analytical Difference: $0.04\%$
+![Convergence Mean 0.5](../pic/convergence_mean_0.5.png)
+
+**Case $\mu = -0.5$:**
+*   Analytical Factor: $f \approx 1.326$
+*   Simulated vs Analytical Difference: $-0.10\%$
+![Convergence Mean -0.5](../pic/convergence_mean_-0.5.png)
+
 ---
 
 ## Appendix A: Analytical Evaluation of Integrals
