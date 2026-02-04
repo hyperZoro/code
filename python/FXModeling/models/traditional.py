@@ -121,7 +121,10 @@ class ARIMAModel(BaseModel):
         """
         Fit ARIMA model.
         """
+        # Ensure timezone-naive index to avoid statsmodels issues
         self.history = data.copy()
+        if hasattr(self.history.index, 'tz') and self.history.index.tz is not None:
+            self.history.index = self.history.index.tz_localize(None)
         
         if self.auto_select:
             self.order = self.auto_select_order(data, max_p, max_d, max_q)
@@ -195,6 +198,11 @@ class GARCHModel(BaseModel):
         """
         Fit GARCH model on returns (not prices).
         """
+        # Ensure timezone-naive index
+        data = data.copy()
+        if hasattr(data.index, 'tz') and data.index.tz is not None:
+            data.index = data.index.tz_localize(None)
+        
         # Calculate returns
         self.returns = data.pct_change().dropna() * 100  # Scale for numerical stability
         self.prices = data.copy()
@@ -284,7 +292,10 @@ class ExponentialSmoothingModel(BaseModel):
         """
         Fit Exponential Smoothing model.
         """
+        # Ensure timezone-naive index
         self.history = data.copy()
+        if hasattr(self.history.index, 'tz') and self.history.index.tz is not None:
+            self.history.index = self.history.index.tz_localize(None)
         
         print(f"Fitting Exponential Smoothing...")
         print(f"  Trend: {self.trend}, Seasonal: {self.seasonal}")

@@ -355,6 +355,212 @@ class Visualizer:
             plt.savefig(os.path.join(self.output_dir, save_path), dpi=300, bbox_inches='tight')
         
         return fig
+    
+    def plot_backtest_window_results(
+        self,
+        window_results: List[Dict],
+        model_name: str,
+        save_path: Optional[str] = None
+    ):
+        """
+        Plot backtest results across rolling windows.
+        """
+        if not window_results:
+            return
+        
+        fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+        
+        windows = [w['window'] for w in window_results]
+        rmse_values = [w['rmse'] for w in window_results]
+        mae_values = [w['mae'] for w in window_results]
+        dir_acc = [w['directional_accuracy'] for w in window_results]
+        
+        # RMSE by window
+        axes[0, 0].plot(windows, rmse_values, marker='o', linewidth=1.5, markersize=4)
+        axes[0, 0].axhline(np.mean(rmse_values), color='r', linestyle='--', label=f'Mean: {np.mean(rmse_values):.4f}')
+        axes[0, 0].set_xlabel("Window")
+        axes[0, 0].set_ylabel("RMSE")
+        axes[0, 0].set_title("RMSE by Window")
+        axes[0, 0].legend()
+        axes[0, 0].grid(True, alpha=0.3)
+        
+        # MAE by window
+        axes[0, 1].plot(windows, mae_values, marker='o', color='orange', linewidth=1.5, markersize=4)
+        axes[0, 1].axhline(np.mean(mae_values), color='r', linestyle='--', label=f'Mean: {np.mean(mae_values):.4f}')
+        axes[0, 1].set_xlabel("Window")
+        axes[0, 1].set_ylabel("MAE")
+        axes[0, 1].set_title("MAE by Window")
+        axes[0, 1].legend()
+        axes[0, 1].grid(True, alpha=0.3)
+        
+        # Directional Accuracy by window
+        axes[1, 0].plot(windows, dir_acc, marker='o', color='green', linewidth=1.5, markersize=4)
+        axes[1, 0].axhline(np.mean(dir_acc), color='r', linestyle='--', label=f'Mean: {np.mean(dir_acc):.1f}%')
+        axes[1, 0].axhline(50, color='gray', linestyle=':', alpha=0.5, label='Random (50%)')
+        axes[1, 0].set_xlabel("Window")
+        axes[1, 0].set_ylabel("Directional Accuracy (%)")
+        axes[1, 0].set_title("Directional Accuracy by Window")
+        axes[1, 0].legend()
+        axes[1, 0].grid(True, alpha=0.3)
+        
+        # Error distribution
+        all_errors = np.concatenate([w['errors'] for w in window_results])
+        axes[1, 1].hist(all_errors, bins=30, edgecolor='black', alpha=0.7, color='steelblue', density=True)
+        
+        # Overlay normal distribution
+        from scipy.stats import norm
+        mu, std = np.mean(all_errors), np.std(all_errors)
+        x = np.linspace(all_errors.min(), all_errors.max(), 100)
+        axes[1, 1].plot(x, norm.pdf(x, mu, std), 'r-', linewidth=2, label=f'N({mu:.4f}, {std:.4f})')
+        axes[1, 1].set_xlabel("Prediction Error")
+        axes[1, 1].set_ylabel("Density")
+        axes[1, 1].set_title("Error Distribution (All Windows)")
+        axes[1, 1].legend()
+        axes[1, 1].grid(True, alpha=0.3)
+        
+        plt.suptitle(f"Backtest Results - {model_name}")
+        plt.tight_layout()
+        
+        if save_path:
+            plt.savefig(os.path.join(self.output_dir, save_path), dpi=300, bbox_inches='tight')
+        
+        return fig
+    
+    def plot_backtest_comparison(
+        self,
+        comparator_results: Dict[str, Dict],
+        save_path: Optional[str] = None
+    ):
+        """
+        Plot comparison of backtest results across models.
+        """
+        fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+        
+        models = list(comparator_results.keys())
+        colors = plt.cm.tab10(np.linspace(0, 1, len(models)))
+        
+        # RMSE comparison
+        rmse_means = [comparator_results[m].get('rmse_mean', np.nan) for m in models]
+        rmse_stds = [comparator_results[m].get('rmse_std', 0) for m in models]
+        
+        axes[0, 0].bar(models, rmse_means, yerr=rmse_stds, capsize=5, color=colors, alpha=0.7)
+        axes[0, 0].set_ylabel("RMSE")
+        axes[0, 0].set_title("Mean RMSE by Model")
+        axes[0, 0].tick_params(axis='x', rotation=45)
+        axes[0, 0].grid(True, alpha=0.3, axis='y')
+        
+        # MAE comparison
+        mae_means = [comparator_results[m].get('mae_mean', np.nan) for m in models]
+        mae_stds = [comparator_results[m].get('mae_std', 0) for m in models]
+        
+        axes[0, 1].bar(models, mae_means, yerr=mae_stds, capsize=5, color=colors, alpha=0.7)
+        axes[0, 1].set_ylabel("MAE")
+        axes[0, 1].set_title("Mean MAE by Model")
+        axes[0, 1].tick_params(axis='x', rotation=45)
+        axes[0, 1].grid(True, alpha=0.3, axis='y')
+        
+        # Directional Accuracy
+        dir_acc = [comparator_results[m].get('directional_accuracy_mean', np.nan) for m in models]
+        
+        axes[1, 0].bar(models, dir_acc, color=colors, alpha=0.7)
+        axes[1, 0].axhline(50, color='red', linestyle='--', label='Random (50%)')
+        axes[1, 0].set_ylabel("Directional Accuracy (%)")
+        axes[1, 0].set_title("Mean Directional Accuracy")
+        axes[1, 0].tick_params(axis='x', rotation=45)
+        axes[1, 0].legend()
+        axes[1, 0].grid(True, alpha=0.3, axis='y')
+        
+        # Box plot of RMSE distribution across windows
+        rmse_data = []
+        model_labels = []
+        for m in models:
+            if 'window_results' in comparator_results[m]:
+                rmse_values = [w['rmse'] for w in comparator_results[m]['window_results']]
+                if rmse_values:
+                    rmse_data.append(rmse_values)
+                    model_labels.append(m)
+        
+        if rmse_data:
+            axes[1, 1].boxplot(rmse_data, labels=model_labels)
+            axes[1, 1].set_ylabel("RMSE")
+            axes[1, 1].set_title("RMSE Distribution Across Windows")
+            axes[1, 1].tick_params(axis='x', rotation=45)
+            axes[1, 1].grid(True, alpha=0.3, axis='y')
+        
+        plt.suptitle("Backtest Comparison Across Models")
+        plt.tight_layout()
+        
+        if save_path:
+            plt.savefig(os.path.join(self.output_dir, save_path), dpi=300, bbox_inches='tight')
+        
+        return fig
+    
+    def plot_distributional_tests(
+        self,
+        distributional_tests: Dict[str, Dict],
+        model_name: str,
+        save_path: Optional[str] = None
+    ):
+        """
+        Visualize distributional test results.
+        """
+        fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+        
+        # Test statistics and p-values
+        test_names = []
+        p_values = []
+        is_normal = []
+        
+        for test_name in ['kolmogorov_smirnov', 'dagostino_pearson', 'jarque_bera', 'anderson_darling']:
+            if test_name in distributional_tests and 'p_value' in distributional_tests[test_name]:
+                test_names.append(test_name.replace('_', ' ').title())
+                p_values.append(distributional_tests[test_name]['p_value'])
+                is_normal.append(distributional_tests[test_name].get('is_normal', False))
+        
+        if test_names:
+            colors = ['green' if n else 'red' for n in is_normal]
+            bars = axes[0].barh(test_names, p_values, color=colors, alpha=0.7)
+            axes[0].axvline(0.05, color='black', linestyle='--', label='Significance (0.05)')
+            axes[0].set_xlabel("P-Value")
+            axes[0].set_title("Normality Tests")
+            axes[0].legend()
+            axes[0].grid(True, alpha=0.3, axis='x')
+            
+            # Add value labels
+            for bar, val in zip(bars, p_values):
+                axes[0].text(val + 0.01, bar.get_y() + bar.get_height()/2, 
+                           f'{val:.4f}', va='center', fontsize=9)
+        
+        # Error summary statistics
+        if 'summary' in distributional_tests:
+            summary = distributional_tests['summary']
+            stats_names = ['Mean', 'Std', 'Skewness', 'Kurtosis']
+            stats_values = [
+                summary.get('mean', 0),
+                summary.get('std', 0),
+                summary.get('skewness', 0),
+                summary.get('kurtosis', 0)
+            ]
+            
+            bars = axes[1].bar(stats_names, stats_values, color='steelblue', alpha=0.7)
+            axes[1].axhline(0, color='black', linestyle='-', linewidth=0.5)
+            axes[1].set_ylabel("Value")
+            axes[1].set_title("Error Summary Statistics")
+            axes[1].grid(True, alpha=0.3, axis='y')
+            
+            # Add value labels
+            for bar, val in zip(bars, stats_values):
+                height = bar.get_height()
+                axes[1].text(bar.get_x() + bar.get_width()/2., height,
+                           f'{val:.4f}', ha='center', va='bottom', fontsize=9)
+        
+        plt.suptitle(f"Distributional Tests - {model_name}")
+        plt.tight_layout()
+        
+        if save_path:
+            plt.savefig(os.path.join(self.output_dir, save_path), dpi=300, bbox_inches='tight')
+        
+        return fig
 
 
 if __name__ == "__main__":

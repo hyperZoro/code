@@ -26,6 +26,7 @@ from data.features import FeatureEngineer
 from models.traditional import ARIMAModel, GARCHModel, ExponentialSmoothingModel
 from models.pytorch_models import LSTMModel, GRUModel, TransformerModel, PyTorchModelWrapper
 from evaluation.comparator import ModelComparator
+from evaluation.backtesting import RollingWindowBacktester, BacktestComparator
 from utils.visualization import Visualizer
 from utils.helpers import load_config, save_config
 
@@ -364,6 +365,344 @@ class FXModelingPipeline:
                 transformer.model.history, "Transformer Training History", "transformer_history.png"
             )
     
+    def run_backtesting(self, target_col: str, enable_dl: bool = False, quick_mode: bool = True):
+        """
+        Run rolling window backtesting with distributional and percentile tests.
+        
+        Args:
+            target_col: Target FX pair column
+            enable_dl: Whether to include deep learning models (slower)
+            quick_mode: If True, use fewer windows for faster testing
+        """
+        print("\n" + "=" * 60)
+        print("ROLLING WINDOW BACKTESTING")
+        print("=" * 60)
+        
+        # Configure backtesting windows
+        # For DL models, we need window_size >= sequence_length + predictions
+        seq_length = self.config['pytorch_models']['lstm']['sequence_length']
+        window_size = max(20, seq_length + 10) if enable_dl else 20
+        min_train_size = 252 if not quick_mode else 500  # Training data required
+        step_size = window_size * (2 if quick_mode else 1)  # Skip every other window in quick mode
+        
+        backtester = RollingWindowBacktester(
+            window_size=window_size,
+            step_size=step_size,  # Non-overlapping windows
+            min_train_size=min_train_size
+        )
+        
+        # Get full data for the target
+        full_series = self.raw_data[target_col]
+        
+        # Remove timezone info to avoid issues
+        if hasattr(full_series.index, 'tz') and full_series.index.tz is not None:
+            full_series = full_series.copy()
+            full_series.index = full_series.index.tz_localize(None)
+        
+        # Need enough data
+        if len(full_series) < min_train_size + window_size * 2:
+            print(f"Warning: Not enough data for backtesting. Need at least {min_train_size + window_size * 2} observations.")
+            return
+        
+        backtest_comparator = BacktestComparator()
+        
+        print(f"Window size: {window_size} days")
+        print(f"Step size: {step_size} days")
+        print(f"Min training data: {min_train_size} days")
+        if quick_mode:
+            print("(Quick mode enabled - using fewer windows for faster execution)")
+        
+        # Backtest Traditional Models
+        print("\n--- Backtesting Traditional Models ---")
+        
+        # ARIMA (simplified order for speed in quick mode)
+        print("\nBacktesting ARIMA...")
+        if quick_mode:
+            def arima_factory():
+                # Use fixed order for speed in quick mode
+                from models.traditional import ARIMAModel
+                model = ARIMAModel.__new__(ARIMAModel)
+                model.name = "ARIMA"
+                model.order = (1, 1, 0)  # Fixed order for speed
+                model.auto_select = False
+                return model
+        else:
+            def arima_factory():
+                return ARIMAModel()
+        
+        try:
+            arima_result = backtester.run_backtest(arima_factory, full_series, "ARIMA")
+            backtest_comparator.add_result(arima_result)
+        except Exception as e:
+            print(f"ARIMA backtest failed: {e}")
+        
+        # Exponential Smoothing
+        print("\nBacktesting Exponential Smoothing...")
+        def ets_factory():
+            return ExponentialSmoothingModel(trend='add')
+        
+        try:
+            ets_result = backtester.run_backtest(ets_factory, full_series, "ExpSmoothing")
+            backtest_comparator.add_result(ets_result)
+        except Exception as e:
+            print(f"ETS backtest failed: {e}")
+        
+        # Deep Learning Models (optional - takes longer)
+        if enable_dl:
+            print("\n--- Backtesting Deep Learning Models ---")
+            print("Note: This will take several minutes as models are retrained for each window...")
+            
+            # Run DL backtests with reduced epochs for speed
+            self._backtest_dl_models(
+                full_series, 
+                backtest_comparator, 
+                backtester,
+                reduced_epochs=30  # Use fewer epochs for backtesting speed
+            )
+        
+        # Print results
+        backtest_comparator.print_summary()
+        
+        # Visualize backtest results
+        print("\n--- Generating Backtest Visualizations ---")
+        for model_name, result in backtest_comparator.results.items():
+            if result.window_results:
+                self.visualizer.plot_backtest_window_results(
+                    result.window_results,
+                    model_name,
+                    f"backtest_windows_{model_name}.png"
+                )
+            
+            if result.distributional_tests:
+                self.visualizer.plot_distributional_tests(
+                    result.distributional_tests,
+                    model_name,
+                    f"backtest_distribution_{model_name}.png"
+                )
+        
+        # Save detailed results
+        self._save_backtest_results(backtest_comparator, target_col)
+        
+        return backtest_comparator
+    
+    def _save_backtest_results(self, comparator: BacktestComparator, target_col: str):
+        """Save backtest results to files."""
+        import json
+        
+        results_dir = self.config['output']['results_dir']
+        os.makedirs(results_dir, exist_ok=True)
+        
+        files_saved = []
+        
+        # Save summary
+        summary_df = comparator.get_summary_table()
+        if not summary_df.empty:
+            summary_path = os.path.join(results_dir, f'backtest_summary_{target_col}.csv')
+            summary_df.to_csv(summary_path)
+            files_saved.append(f'backtest_summary_{target_col}.csv')
+        
+        # Save distributional tests
+        dist_df = comparator.get_distributional_tests_table()
+        if not dist_df.empty:
+            dist_path = os.path.join(results_dir, f'backtest_distributional_{target_col}.csv')
+            dist_df.to_csv(dist_path)
+            files_saved.append(f'backtest_distributional_{target_col}.csv')
+        
+        # Save VaR tests
+        var_df = comparator.get_var_tests_table()
+        if not var_df.empty:
+            var_path = os.path.join(results_dir, f'backtest_var_{target_col}.csv')
+            var_df.to_csv(var_path)
+            files_saved.append(f'backtest_var_{target_col}.csv')
+        
+        if files_saved:
+            print(f"\nBacktest results saved to {results_dir}:")
+            for f in files_saved:
+                print(f"  - {f}")
+        else:
+            print(f"\nWarning: No backtest results to save (all backtests failed or produced no data)")
+    
+    def _backtest_dl_models(
+        self,
+        full_series: pd.Series,
+        backtest_comparator,
+        backtester,
+        reduced_epochs: int = 30
+    ):
+        """
+        Backtest Deep Learning models using a custom rolling window approach.
+        
+        This is more complex than traditional models because:
+        1. We need to prepare sequences for each window
+        2. We need to retrain models for each window
+        3. Training is computationally expensive
+        """
+        from sklearn.preprocessing import StandardScaler
+        from models.pytorch_models import LSTMModel, GRUModel, TransformerModel, PyTorchModelWrapper
+        from evaluation.backtesting import BacktestResult
+        
+        # Feature configuration
+        feature_cfg = self.config['features'].copy()
+        feature_cfg['lags'] = list(range(1, 6))
+        
+        # Get sequence length from config
+        seq_length = self.config['pytorch_models']['lstm']['sequence_length']
+        
+        # Ensure window size is at least as large as sequence length + some predictions
+        min_window_size = seq_length + 5
+        if backtester.window_size < min_window_size:
+            print(f"  Warning: Window size {backtester.window_size} too small for DL models (need >= {min_window_size})")
+            print(f"  Skipping DL backtesting")
+            return
+        
+        # Create full feature set
+        features_df = self.feature_engineer.create_all_features(
+            full_series.to_frame(), feature_cfg
+        ).dropna()
+        
+        # Generate windows
+        windows = backtester.generate_windows(full_series)
+        
+        # Limit windows for DL models (too slow otherwise)
+        max_dl_windows = 10
+        if len(windows) > max_dl_windows:
+            print(f"  Limiting to {max_dl_windows} windows for DL models (speed)")
+            # Take evenly spaced windows
+            indices = np.linspace(0, len(windows) - 1, max_dl_windows, dtype=int)
+            windows = [windows[i] for i in indices]
+        
+        dl_models_config = {
+            'LSTM': (LSTMModel, self.config['pytorch_models']['lstm']),
+            'GRU': (GRUModel, self.config['pytorch_models']['gru']),
+            'Transformer': (TransformerModel, self.config['pytorch_models']['transformer'])
+        }
+        
+        for model_name, (model_class, base_config) in dl_models_config.items():
+            if not base_config.get('enabled', True):
+                continue
+            
+            print(f"\n  Backtesting {model_name}...")
+            
+            # Modify config for faster training in backtest
+            config = base_config.copy()
+            config['epochs'] = reduced_epochs
+            config['early_stopping_patience'] = 5
+            config['verbose'] = False
+            
+            window_results = []
+            
+            for i, (train_start, train_end, test_start, test_end) in enumerate(windows):
+                try:
+                    # Get window indices in features_df
+                    train_mask = (features_df.index >= train_start) & (features_df.index <= train_end)
+                    test_mask = (features_df.index >= test_start) & (features_df.index <= test_end)
+                    
+                    train_features = features_df[train_mask]
+                    test_features = features_df[test_mask]
+                    
+                    if len(train_features) < seq_length + 50 or len(test_features) < 1:
+                        continue
+                    
+                    # Scale features
+                    scaler = StandardScaler()
+                    train_scaled = scaler.fit_transform(train_features)
+                    test_scaled = scaler.transform(test_features)
+                    
+                    # Create sequences
+                    def create_sequences(data, seq_len):
+                        X, y = [], []
+                        for j in range(len(data) - seq_len):
+                            X.append(data[j:(j + seq_len)])
+                            y.append(data[j + seq_len, 0])
+                        return np.array(X), np.array(y)
+                    
+                    X_train, y_train = create_sequences(train_scaled, seq_length)
+                    X_test, y_test = create_sequences(test_scaled, seq_length)
+                    
+                    if len(X_train) < 10 or len(X_test) < 1:
+                        continue
+                    
+                    # Split training data for validation
+                    split = int(0.9 * len(X_train))
+                    X_tr, X_val = X_train[:split], X_train[split:]
+                    y_tr, y_val = y_train[:split], y_train[split:]
+                    
+                    # Train model
+                    wrapper = PyTorchModelWrapper(model_class, X_train.shape[2], config)
+                    wrapper.fit(X_tr, y_tr, X_val, y_val, verbose=False)
+                    
+                    # Predict
+                    predictions_scaled = wrapper.predict(X_test)
+                    
+                    # Inverse transform predictions
+                    pred_full = np.zeros((len(predictions_scaled), test_scaled.shape[1]))
+                    pred_full[:, 0] = predictions_scaled
+                    predictions = scaler.inverse_transform(pred_full)[:, 0]
+                    
+                    # Get actual values (aligned with predictions)
+                    actuals = test_features.iloc[seq_length:seq_length + len(predictions), 0].values
+                    
+                    # Calculate errors
+                    errors = actuals - predictions
+                    
+                    window_result = {
+                        'window': i,
+                        'train_start': train_start,
+                        'train_end': train_end,
+                        'test_start': test_start,
+                        'test_end': test_end,
+                        'actuals': actuals,
+                        'predictions': predictions,
+                        'errors': errors,
+                        'mse': np.mean(errors ** 2),
+                        'mae': np.mean(np.abs(errors)),
+                        'rmse': np.sqrt(np.mean(errors ** 2)),
+                        'mape': np.mean(np.abs(errors / actuals)) * 100 if np.all(actuals != 0) else np.nan,
+                        'mean_error': np.mean(errors),
+                        'std_error': np.std(errors),
+                        'directional_accuracy': self._calculate_directional_accuracy(actuals, predictions)
+                    }
+                    
+                    window_results.append(window_result)
+                    print(f"    Window {i+1}/{len(windows)}: RMSE={window_result['rmse']:.4f}")
+                    
+                except Exception as e:
+                    print(f"    Window {i+1} failed: {e}")
+                    continue
+            
+            # Compile results
+            if window_results:
+                all_errors = np.concatenate([w['errors'] for w in window_results])
+                all_actuals = np.concatenate([w['actuals'] for w in window_results])
+                all_predictions = np.concatenate([w['predictions'] for w in window_results])
+                
+                from evaluation.backtesting import RollingWindowBacktester
+                distributional_tests = RollingWindowBacktester()._run_distributional_tests(all_errors)
+                percentile_tests = RollingWindowBacktester()._run_percentile_tests(all_actuals, all_predictions)
+                summary_stats = RollingWindowBacktester()._compute_summary_stats(window_results)
+                
+                result = BacktestResult(
+                    model_name=model_name,
+                    window_results=window_results,
+                    distributional_tests=distributional_tests,
+                    percentile_tests=percentile_tests,
+                    summary_stats=summary_stats
+                )
+                
+                backtest_comparator.add_result(result)
+                print(f"  {model_name} backtest complete: {len(window_results)} windows")
+            else:
+                print(f"  {model_name} backtest failed: no successful windows")
+    
+    def _calculate_directional_accuracy(self, actuals: np.ndarray, predictions: np.ndarray) -> float:
+        """Helper method for directional accuracy calculation."""
+        if len(actuals) < 2 or len(predictions) < 2:
+            return 0.0
+        actual_direction = np.sign(np.diff(actuals))
+        pred_direction = np.sign(np.diff(predictions))
+        correct = np.sum(actual_direction == pred_direction)
+        return (correct / len(actual_direction)) * 100 if len(actual_direction) > 0 else 0.0
+    
     def evaluate_and_visualize(self, target_col: str):
         """
         Evaluate all models and generate comparison visualizations.
@@ -488,6 +827,10 @@ class FXModelingPipeline:
         
         # Evaluate
         self.evaluate_and_visualize(target_col)
+        
+        # Run backtesting (rolling window with distributional tests)
+        # Set enable_dl=True to include deep learning models (slower)
+        self.run_backtesting(target_col, enable_dl=False)
         
         # Save models if configured
         if self.config['output']['save_models']:

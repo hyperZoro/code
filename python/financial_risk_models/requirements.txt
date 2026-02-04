@@ -1,0 +1,13 @@
+torch
+yfinance
+pandas
+numpy
+statsmodels
+arch
+scikit-learn
+matplotlib
+seaborn
+scipy
+ipykernel
+jupyter
+tqdm
