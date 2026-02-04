@@ -1,0 +1,98 @@
+# FX Rate Modeling Configuration
+
+# Data Configuration
+data:
+  fx_pairs:
+    - EURUSD=X
+    - GBPUSD=X
+    - USDJPY=X
+    - USDCHF=X
+    - AUDUSD=X
+  start_date: "2020-01-01"
+  end_date: null  # null means today
+  freq: "1d"
+  train_ratio: 0.8
+  val_ratio: 0.1
+
+# Feature Engineering
+features:
+  returns: true
+  log_returns: true
+  volatility_windows: [5, 10, 20, 60]
+  sma_windows: [5, 10, 20, 60]
+  ema_windows: [12, 26]
+  rsi_period: 14
+  macd_fast: 12
+  macd_slow: 26
+  macd_signal: 9
+
+# Traditional Models
+traditional_models:
+  arima:
+    enabled: true
+    auto_select: true
+    max_p: 5
+    max_d: 2
+    max_q: 5
+  garch:
+    enabled: true
+    p: 1
+    q: 1
+    dist: "normal"  # normal, t, skewt
+  exponential_smoothing:
+    enabled: true
+    seasonal_periods: null
+
+# PyTorch Models
+pytorch_models:
+  lstm:
+    enabled: true
+    hidden_size: 128
+    num_layers: 2
+    dropout: 0.2
+    learning_rate: 0.001
+    batch_size: 32
+    epochs: 100
+    sequence_length: 60
+    early_stopping_patience: 10
+  
+  gru:
+    enabled: true
+    hidden_size: 128
+    num_layers: 2
+    dropout: 0.2
+    learning_rate: 0.001
+    batch_size: 32
+    epochs: 100
+    sequence_length: 60
+    early_stopping_patience: 10
+  
+  transformer:
+    enabled: true
+    d_model: 64
+    nhead: 4
+    num_encoder_layers: 2
+    dim_feedforward: 256
+    dropout: 0.1
+    learning_rate: 0.0005
+    batch_size: 32
+    epochs: 100
+    sequence_length: 60
+    early_stopping_patience: 10
+
+# Evaluation
+evaluation:
+  metrics:
+    - mse
+    - rmse
+    - mae
+    - mape
+    - directional_accuracy
+  horizon: [1, 5, 10, 20]  # prediction horizons in days
+
+# Output
+output:
+  save_models: true
+  save_predictions: true
+  plots_dir: "./plots"
+  results_dir: "./results"
