@@ -28,10 +28,10 @@ class Config:
     portfolio_structure: str = "strangle"  # straddle | strangle
     position_side: str = "long"
     position_units: float = 1.0  # Applied to each leg
-    trade_maturity_days: int = 21
+    trade_maturity_days: int = 7
     trade_moneyness: float = 1.0
     trade_strike_override: float | None = None
-    call_moneyness: float = 1.05
-    put_moneyness: float = 0.95
+    call_moneyness: float = 1.10
+    put_moneyness: float = 0.90
     call_strike_override: float | None = None
     put_strike_override: float | None = None

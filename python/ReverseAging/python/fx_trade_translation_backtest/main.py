@@ -7,7 +7,7 @@ import pandas as pd
 from .config import Config
 from .data_loader import load_market_data
 from .engine import BacktestEngine
-from .reporting import create_histograms, create_hop_bar_chart, evaluate
+from .reporting import create_histograms, create_hop_bar_chart, create_translation_dashboard, evaluate
 
 
 def run_backtest(output_dir: Path | str = "python/fx_trade_translation_backtest/output") -> None:
@@ -28,6 +28,7 @@ def run_backtest(output_dir: Path | str = "python/fx_trade_translation_backtest/
     stats_path = out / "ks_stats.csv"
     plot_path = out / "pit_histograms.png"
     hop_plot_path = out / "pit_hop_comparison.png"
+    dashboard_path = out / "trade_translation_dashboard.html"
 
     result.summary.to_csv(summary_path, index=False)
     translation_cols = [
@@ -91,6 +92,7 @@ def run_backtest(output_dir: Path | str = "python/fx_trade_translation_backtest/
     stats.to_csv(stats_path, index=False)
     create_histograms(result.summary, plot_path)
     create_hop_bar_chart(result.summary, hop_plot_path)
+    create_translation_dashboard(result.summary, dashboard_path)
 
     print(f"Saved backtest summary: {summary_path}")
     print(f"Saved translated-trade diagnostics: {translated_trades_path}")
@@ -98,6 +100,7 @@ def run_backtest(output_dir: Path | str = "python/fx_trade_translation_backtest/
     print(f"Saved KS statistics: {stats_path}")
     print(f"Saved histogram plot: {plot_path}")
     print(f"Saved hop-date comparison plot: {hop_plot_path}")
+    print(f"Saved translation dashboard: {dashboard_path}")
 
 
 if __name__ == "__main__":

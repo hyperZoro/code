@@ -21,6 +21,7 @@ Outputs are written to:
 - `python/fx_trade_translation_backtest/output/ks_stats.csv`
 - `python/fx_trade_translation_backtest/output/pit_histograms.png`
 - `python/fx_trade_translation_backtest/output/pit_hop_comparison.png`
+- `python/fx_trade_translation_backtest/output/trade_translation_dashboard.html`
 
 ## Portfolio Definition
 
