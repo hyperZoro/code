@@ -1,0 +1,9 @@
+.DS_Store
+.git
+node_modules
+npm-debug.log
+coverage
+test
+*.md
+docker-compose.yml
+deploy

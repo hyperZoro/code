@@ -1,0 +1,14 @@
+{
+  "name": "school-holiday-flight-searcher",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Personal family holiday flight search helper for school-compatible return trips.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

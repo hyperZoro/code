@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Dashboard</title>
+    <!-- Use Google Fonts for modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <main class="container">
+        <header>
+            <h1>Server Dashboard</h1>
+            <p>Welcome to your personal Unraid application hub. Select an application below to launch it.</p>
+        </header>
+
+        <section class="grid">
+            <!-- Mortgage Calculator Application Card -->
+            <a href="/MortgageCalculator/index.html" class="app-card" aria-label="Open Mortgage Calculator">
+                <div class="app-icon mortgage">
+                    <!-- Calculator / House SVG Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                </div>
+                <div class="app-info">
+                    <h2>Mortgage Calculator</h2>
+                    <p>Calculate your loan payments, breakdown principal and interest, and model overpayments.</p>
+                </div>
+                <div class="app-arrow">
+                    <!-- Right Arrow SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                        stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                </div>
+            </a>
+
+            <!-- You can add more cards here as you install more apps -->
+            <!--
+            <a href="/NextApp" class="app-card">
+                <div class="app-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <svg>...</svg>
+                </div>
+                <div class="app-info">
+                    <h2>Next App</h2>
+                    <p>Description for your next application goes here.</p>
+                </div>
+            </a>
+            -->
+        </section>
+    </main>
+</body>
+
+</html>

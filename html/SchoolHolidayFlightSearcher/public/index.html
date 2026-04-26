@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Family Flight Finder</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <div>
+          <h1>Family Flight Finder</h1>
+          <p class="lede">School-window flight search with real prices, airport control, and family-trip length limits.</p>
+        </div>
+        <div class="status-panel" aria-live="polite">
+          <span class="status-dot"></span>
+          <span id="service-status">Checking local service</span>
+        </div>
+      </section>
+
+      <form id="search-form" class="workspace">
+        <section class="panel route-panel" aria-labelledby="route-heading">
+          <div class="panel-heading">
+            <h2 id="route-heading">Route</h2>
+          </div>
+          <div class="field-grid">
+            <label>
+              <span>From</span>
+              <input name="origin" value="LON" list="airport-options" autocomplete="off" required>
+            </label>
+            <label>
+              <span>To</span>
+              <input name="destination" value="CAN" list="airport-options" autocomplete="off" required>
+            </label>
+            <label>
+              <span>Adults</span>
+              <input name="adults" type="number" min="1" value="2" required>
+            </label>
+          </div>
+          <datalist id="airport-options"></datalist>
+          <div id="route-presets" class="route-presets" aria-label="Route presets"></div>
+          <div class="airport-tools">
+            <div>
+              <span class="tool-label">London departure airports</span>
+              <div id="london-airports" class="airport-checks"></div>
+            </div>
+            <button id="home-airports" class="secondary-action compact-action" type="button">LHR + LGW</button>
+            <button id="holiday-airports" class="secondary-action compact-action" type="button">All London</button>
+          </div>
+          <div id="airport-summary" class="airport-summary" aria-live="polite"></div>
+        </section>
+
+        <section class="panel" aria-labelledby="children-heading">
+          <div class="panel-heading">
+            <h2 id="children-heading">Children</h2>
+          </div>
+          <div class="school-tools">
+            <button id="load-freemens" class="secondary-action" type="button">Load Freemen's dates</button>
+            <label>
+              <span>Holiday window</span>
+              <select id="freemens-window" disabled>
+                <option value="">Load dates first</option>
+              </select>
+            </label>
+            <button id="apply-freemens" class="secondary-action" type="button" disabled>Apply to children</button>
+            <span id="school-status" class="tool-status" aria-live="polite"></span>
+          </div>
+          <div id="children" class="children-grid"></div>
+        </section>
+
+        <section class="panel controls-panel" aria-labelledby="flex-heading">
+          <div class="panel-heading">
+            <h2 id="flex-heading">Flexibility</h2>
+          </div>
+          <div class="override-tools">
+            <label class="toggle-line">
+              <input id="override-enabled" name="overrideEnabled" type="checkbox">
+              <span>Override school window</span>
+            </label>
+            <label>
+              <span>Override start</span>
+              <input id="override-start" name="overrideStartDate" type="date" disabled>
+            </label>
+            <label>
+              <span>Override end</span>
+              <input id="override-end" name="overrideEndDate" type="date" disabled>
+            </label>
+          </div>
+          <div class="field-grid">
+            <label>
+              <span>Leave early days</span>
+              <input name="leaveEarlyDays" type="number" min="0" max="14" value="0">
+            </label>
+            <label>
+              <span>Return late days</span>
+              <input name="returnLateDays" type="number" min="0" max="14" value="0">
+            </label>
+            <label>
+              <span>Minimum trip days</span>
+              <input name="minTripDays" type="number" min="2" max="90" value="21">
+            </label>
+            <label>
+              <span>Extra flexible days</span>
+              <input name="tripFlexDays" type="number" min="0" max="30" value="7">
+            </label>
+          </div>
+          <button class="primary-action" type="submit">Search flights</button>
+        </section>
+      </form>
+
+      <section class="results-layout">
+        <aside class="window-summary" aria-labelledby="window-heading">
+          <h2 id="window-heading">Shared Window</h2>
+          <div id="window-card" class="empty-state">Run a search to calculate the family travel window.</div>
+        </aside>
+        <section class="results-panel" aria-labelledby="results-heading">
+          <div class="panel-heading">
+            <h2 id="results-heading">Recommended Flights</h2>
+            <span id="result-count" class="count-pill">0</span>
+          </div>
+          <div id="results" class="results-list">
+            <div class="empty-state">Search results will appear here.</div>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

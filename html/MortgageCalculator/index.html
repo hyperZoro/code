@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Mortgage Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <header>
+            <h1>Mortgage Comparison Dashboard</h1>
+            <p>Analyze and compare repayment scenarios</p>
+        </header>
+
+        <div class="inputs-row">
+            <div class="scenario-box glass-panel var-a-box">
+                <h2 class="var-a-title">Scenario A (Primary)</h2>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="loanAmountA">Loan Amount ($)</label>
+                        <input type="number" id="loanAmountA" value="300000" min="1000" step="1000">
+                    </div>
+                    <div class="input-group">
+                        <label for="interestRateA">Interest Rate (%)</label>
+                        <input type="number" id="interestRateA" value="5.5" min="0.1" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="loanTermA">Loan Term (Years)</label>
+                        <input type="number" id="loanTermA" value="30" min="1" step="1">
+                    </div>
+                    <div class="input-group highlight-a">
+                        <label for="overpaymentA">Monthly Overpay ($)</label>
+                        <input type="number" id="overpaymentA" value="0" min="0" step="100">
+                    </div>
+                </div>
+            </div>
+
+            <div class="scenario-box glass-panel var-b-box">
+                <h2 class="var-b-title">Scenario B (Comparison)</h2>
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="loanAmountB">Loan Amount ($)</label>
+                        <input type="number" id="loanAmountB" value="300000" min="1000" step="1000">
+                    </div>
+                    <div class="input-group">
+                        <label for="interestRateB">Interest Rate (%)</label>
+                        <input type="number" id="interestRateB" value="4.5" min="0.1" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label for="loanTermB">Loan Term (Years)</label>
+                        <input type="number" id="loanTermB" value="30" min="1" step="1">
+                    </div>
+                    <div class="input-group highlight-b">
+                        <label for="overpaymentB">Monthly Overpay ($)</label>
+                        <input type="number" id="overpaymentB" value="200" min="0" step="100">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-section">
+            <div class="summary-card glass-panel">
+                <h3>First Month Repayment</h3>
+                <div class="comparison-row">
+                    <div class="scenario-data var-a">
+                        <div class="val" id="mTotalA">$0.00</div>
+                        <div class="sub">Princ: <span id="mPrincA">$0</span></div>
+                        <div class="sub">Int: <span id="mIntA">$0</span></div>
+                    </div>
+                    <div class="scenario-data var-b">
+                        <div class="val" id="mTotalB">$0.00</div>
+                        <div class="sub">Princ: <span id="mPrincB">$0</span></div>
+                        <div class="sub">Int: <span id="mIntB">$0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-card glass-panel">
+                <h3>Year 1 Totals</h3>
+                <div class="comparison-row">
+                    <div class="scenario-data var-a">
+                        <div class="val" id="yTotalA">$0.00</div>
+                        <div class="sub">Princ: <span id="yPrincA">$0</span></div>
+                        <div class="sub">Int: <span id="yIntA">$0</span></div>
+                    </div>
+                    <div class="scenario-data var-b">
+                        <div class="val" id="yTotalB">$0.00</div>
+                        <div class="sub">Princ: <span id="yPrincB">$0</span></div>
+                        <div class="sub">Int: <span id="yIntB">$0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-card glass-panel">
+                <h3>Payoff Time & Cost</h3>
+                <div class="comparison-row">
+                    <div class="scenario-data var-a">
+                        <div class="val" id="payoffTimeA">0 Yrs</div>
+                        <div class="sub">Total Int: <span id="totalIntA">$0</span></div>
+                    </div>
+                    <div class="scenario-data var-b">
+                        <div class="val" id="payoffTimeB">0 Yrs</div>
+                        <div class="sub">Total Int: <span id="totalIntB">$0</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-section glass-panel">
+            <div class="chart-header">
+                <h2>Annual Repayment Breakdown</h2>
+                <div class="chart-legend-custom">
+                    <div class="legend-item"><span class="box a-princ"></span> A: Principal</div>
+                    <div class="legend-item"><span class="box a-int"></span> A: Interest</div>
+                    <div class="legend-item separator">|</div>
+                    <div class="legend-item"><span class="box b-princ"></span> B: Principal</div>
+                    <div class="legend-item"><span class="box b-int"></span> B: Interest</div>
+                </div>
+            </div>
+            <div class="canvas-container">
+                <canvas id="amortizationChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
