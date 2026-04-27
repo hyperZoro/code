@@ -28,6 +28,49 @@ function clampNonNegativeInteger(value, fallback = 0) {
   return Math.floor(number);
 }
 
+function normalizeAirlineName(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
+function normalizePreferredAirlines(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return [...new Set(value.map((airline) => String(airline || "").trim()).filter(Boolean))];
+}
+
+function itineraryAirlines(itinerary) {
+  const names = [];
+  if (itinerary.airlineSummary) {
+    names.push(...String(itinerary.airlineSummary).split(","));
+  }
+
+  for (const segment of [...(itinerary.outboundSegments || []), ...(itinerary.returnSegments || [])]) {
+    if (segment.airline) {
+      names.push(segment.airline);
+    }
+  }
+
+  return [...new Set(names.map((name) => String(name || "").trim()).filter(Boolean))];
+}
+
+function matchesPreferredAirlines(itinerary, preferredAirlines) {
+  const preferred = new Set(normalizePreferredAirlines(preferredAirlines).map(normalizeAirlineName));
+  if (preferred.size === 0) {
+    return true;
+  }
+
+  const airlines = itineraryAirlines(itinerary).map(normalizeAirlineName).filter(Boolean);
+  if (airlines.length === 0) {
+    return false;
+  }
+
+  return airlines.every((airline) => preferred.has(airline));
+}
+
 function daysBetweenDates(startDate, endDate) {
   return Math.round((parseDate(endDate, "endDate").getTime() - parseDate(startDate, "startDate").getTime()) / DAY_MS);
 }
@@ -196,7 +239,8 @@ function normalizeRequest(request) {
     minTripDays,
     tripFlexDays,
     maxTripDays: minTripDays + tripFlexDays,
-    overrideWindow
+    overrideWindow,
+    preferredAirlines: normalizePreferredAirlines(request.preferredAirlines)
   };
 }
 
@@ -209,7 +253,10 @@ function buildSearchResponse(request, providerResults, providerMeta = {}) {
   const travelWindow = computeTravelWindow(normalizedRequest);
   travelWindow.minTripDays = normalizedRequest.minTripDays;
   travelWindow.maxTripDays = normalizedRequest.maxTripDays;
-  const eligible = providerResults.filter((itinerary) => isItineraryInsideWindow(itinerary, travelWindow));
+  const windowEligible = providerResults.filter((itinerary) => isItineraryInsideWindow(itinerary, travelWindow));
+  const eligible = windowEligible.filter((itinerary) =>
+    matchesPreferredAirlines(itinerary, normalizedRequest.preferredAirlines)
+  );
   const itineraries = scoreEligibleItineraries(eligible);
 
   return {
@@ -218,7 +265,11 @@ function buildSearchResponse(request, providerResults, providerMeta = {}) {
     provider: providerMeta.provider || "mock",
     requestedProvider: providerMeta.requestedProvider || providerMeta.provider || "mock",
     providerWarning: providerMeta.warning || null,
-    searchMeta: providerMeta.searchMeta || null,
+    searchMeta: {
+      ...(providerMeta.searchMeta || {}),
+      airlineFilter: normalizedRequest.preferredAirlines,
+      filteredByAirlines: windowEligible.length - eligible.length
+    },
     resultCount: itineraries.length,
     itineraries
   };
@@ -231,6 +282,9 @@ module.exports = {
   daysBetweenDates,
   formatDate,
   isItineraryInsideWindow,
+  itineraryAirlines,
+  matchesPreferredAirlines,
+  normalizePreferredAirlines,
   parseDate,
   scoreEligibleItineraries
 };

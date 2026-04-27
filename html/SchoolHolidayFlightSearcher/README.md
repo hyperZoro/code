@@ -47,6 +47,7 @@ To use real Google Flights results via SerpApi, create `.env` beside `docker-com
 ```text
 FLIGHT_PROVIDER=serpapi
 SERPAPI_API_KEY=your-key-here
+TERM_CACHE_REFRESH_DAYS=183
 SERPAPI_CURRENCY=GBP
 SERPAPI_GOOGLE_COUNTRY=uk
 SERPAPI_LANGUAGE=en
@@ -59,6 +60,18 @@ SERPAPI_DEEP_SEARCH=false
 ```
 
 `SERPAPI_MAX_DATE_PAIRS` controls the main search cost. `SERPAPI_RETURN_DETAILS_LIMIT` controls how many cheap results get extra return-flight detail lookups. `SERPAPI_RETURN_REVERSE_FALLBACK=true` may use an extra one-way return lookup when Google Flights does not return return-sector details from the round-trip token. Start with `4` and `3`.
+
+## Stored Term Dates
+
+Freemen's term dates are cached in:
+
+```text
+data/freemens-term-dates.json
+```
+
+`TERM_CACHE_REFRESH_DAYS=183` means the app auto-refreshes when the furthest stored holiday period ends within roughly the next half year. Use `Refresh stored dates` in the app to force an update.
+
+Date loading is deterministic by default: the server reads the stored JSON cache, and refreshes by parsing the Freemen's term-date page. Gemini is only an optional fallback if that parser cannot extract enough dates.
 
 ## Unraid + Existing Nginx Docker
 
@@ -89,6 +102,7 @@ The page calls backend endpoints:
 ```text
 GET /api/health
 GET /api/airports
+GET /api/airlines
 POST /api/search
 ```
 

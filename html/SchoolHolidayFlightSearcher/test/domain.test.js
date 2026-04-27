@@ -4,6 +4,7 @@ const {
   buildSearchResponse,
   computeTravelWindow,
   isItineraryInsideWindow,
+  matchesPreferredAirlines,
   scoreEligibleItineraries
 } = require("../src/domain");
 
@@ -165,4 +166,67 @@ test("builds a complete response from provider results", () => {
   assert.equal(response.resultCount, 1);
   assert.equal(response.itineraries[0].id, "inside");
   assert.equal(response.request.origin, "LON");
+});
+
+test("filters itineraries to preferred airlines when requested", () => {
+  const response = buildSearchResponse(
+    {
+      origin: "LHR",
+      destination: "CAN",
+      adults: 2,
+      childrenAges: [9, 11],
+      children,
+      preferredAirlines: ["British Airways"],
+      leaveEarlyDays: 0,
+      returnLateDays: 0
+    },
+    [
+      {
+        id: "ba",
+        price: 3800,
+        currency: "GBP",
+        outboundDate: "2026-08-01",
+        inboundDate: "2026-08-20",
+        airlineSummary: "British Airways",
+        outboundSegments: [{ airline: "British Airways" }],
+        returnSegments: [{ airline: "British Airways" }],
+        stops: 0,
+        totalDurationMinutes: 690,
+        directBaselineDurationMinutes: 690,
+        layoverDurationMinutes: 0
+      },
+      {
+        id: "swiss",
+        price: 3200,
+        currency: "GBP",
+        outboundDate: "2026-08-01",
+        inboundDate: "2026-08-20",
+        airlineSummary: "SWISS",
+        outboundSegments: [{ airline: "SWISS" }],
+        returnSegments: [{ airline: "SWISS" }],
+        stops: 1,
+        totalDurationMinutes: 820,
+        directBaselineDurationMinutes: 690,
+        layoverDurationMinutes: 100
+      }
+    ]
+  );
+
+  assert.equal(response.resultCount, 1);
+  assert.equal(response.itineraries[0].id, "ba");
+  assert.equal(response.searchMeta.filteredByAirlines, 1);
+});
+
+test("requires all known sector airlines to match preferences", () => {
+  assert.equal(
+    matchesPreferredAirlines(
+      {
+        airlineSummary: "British Airways, SWISS",
+        outboundSegments: [{ airline: "British Airways" }],
+        returnSegments: [{ airline: "SWISS" }]
+      },
+      ["British Airways"]
+    ),
+    false
+  );
 });

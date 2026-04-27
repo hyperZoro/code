@@ -31,6 +31,18 @@ public/index.html
 src/domain.js
 ```
 
+The app also creates this folder for stored term dates:
+
+```text
+data/
+```
+
+On Unraid that means:
+
+```text
+/mnt/user/appdata/flight-searcher/data
+```
+
 ## 2. Build And Start The App Container
 
 Open an Unraid terminal, then go to the project folder:
@@ -50,6 +62,7 @@ Add:
 ```text
 FLIGHT_PROVIDER=serpapi
 SERPAPI_API_KEY=your-serpapi-key-here
+TERM_CACHE_REFRESH_DAYS=183
 SERPAPI_CURRENCY=GBP
 SERPAPI_GOOGLE_COUNTRY=uk
 SERPAPI_LANGUAGE=en
@@ -217,6 +230,24 @@ Use it like this:
 
 The app treats children aged `12` and older as Senior School. Younger children use Junior School dates.
 
+Term dates are stored server-side in:
+
+```text
+data/freemens-term-dates.json
+```
+
+Click `Load Freemen's dates` to use the stored copy when it is still current.
+
+Click `Refresh stored dates` to fetch the school page again and replace the stored copy.
+
+The app also auto-refreshes when the furthest stored holiday period ends within the next `TERM_CACHE_REFRESH_DAYS`. The default is roughly half a year:
+
+```text
+183
+```
+
+This date loading is not normally done by AI. The app reads the stored JSON file first, then refreshes by deterministically parsing the Freemen's term-date page. Gemini is only used as a fallback if that parser cannot extract enough dates and `GEMINI_API_KEY` is configured.
+
 ## 7. Updating An Existing Install
 
 Use this section when you already have `flight-searcher` running on Unraid and want to replace it with a newer version.
@@ -265,6 +296,7 @@ Important:
 
 - keep `.env`
 - keep `.env.backup`
+- keep `data/`
 - replace app files such as `server.js`, `package.json`, `Dockerfile`, `docker-compose.yml`, `src/`, `public/`, `docs/`, and `test/`
 - do not put your API keys into source files
 
@@ -278,6 +310,12 @@ If `.env` was accidentally overwritten or removed, restore it:
 
 ```bash
 cp .env.backup .env
+```
+
+If `data/` already exists, leave it in place. It contains cached school term dates:
+
+```text
+data/freemens-term-dates.json
 ```
 
 Rebuild and start:

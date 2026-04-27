@@ -7,6 +7,7 @@ const serviceStatus = document.querySelector("#service-status");
 const statusPanel = document.querySelector(".status-panel");
 const submitButton = form.querySelector("button[type='submit']");
 const loadFreemensButton = document.querySelector("#load-freemens");
+const refreshFreemensButton = document.querySelector("#refresh-freemens");
 const applyFreemensButton = document.querySelector("#apply-freemens");
 const freemensWindowSelect = document.querySelector("#freemens-window");
 const schoolStatus = document.querySelector("#school-status");
@@ -16,6 +17,9 @@ const airportSummary = document.querySelector("#airport-summary");
 const londonAirportsRoot = document.querySelector("#london-airports");
 const homeAirportsButton = document.querySelector("#home-airports");
 const holidayAirportsButton = document.querySelector("#holiday-airports");
+const airlinePreferencesRoot = document.querySelector("#airline-preferences");
+const airlineSummary = document.querySelector("#airline-summary");
+const airlineActionsRoot = document.querySelector(".airline-actions");
 const overrideEnabledInput = document.querySelector("#override-enabled");
 const overrideStartInput = document.querySelector("#override-start");
 const overrideEndInput = document.querySelector("#override-end");
@@ -48,6 +52,7 @@ const defaultChildren = [
 ];
 let freemensCatalog = null;
 let airportCatalog = { airports: [], routePresets: [] };
+let airlineCatalog = { groups: [], airlines: [] };
 const londonAirportCodes = ["LHR", "LGW", "STN", "LTN", "LCY"];
 
 function formatDate(dateString) {
@@ -107,6 +112,10 @@ function selectedLondonAirports() {
   return [...londonAirportsRoot.querySelectorAll("input:checked")].map((input) => input.value);
 }
 
+function selectedPreferredAirlines() {
+  return [...airlinePreferencesRoot.querySelectorAll("input:checked")].map((input) => input.value);
+}
+
 function syncOriginFromAirportChecks() {
   const selected = selectedLondonAirports();
   if (selected.length === londonAirportCodes.length) {
@@ -164,6 +173,64 @@ async function loadAirports() {
   } catch {
     airportSummary.textContent = "Airport helper unavailable; IATA codes still work.";
   }
+}
+
+function renderAirlines(payload) {
+  airlineCatalog = payload;
+  airlinePreferencesRoot.innerHTML = payload.groups
+    .map(
+      (group) => `
+        <div class="airline-group" data-airline-group="${group.id}">
+          <span>${group.label}</span>
+          <div class="airline-checks-row">
+            ${group.airlines
+              .map(
+                (airline) => `
+                  <label class="airport-check airline-check">
+                    <input type="checkbox" value="${airline}">
+                    <span>${airline}</span>
+                  </label>
+                `
+              )
+              .join("")}
+          </div>
+        </div>
+      `
+    )
+    .join("");
+  refreshAirlineSummary();
+}
+
+async function loadAirlines() {
+  try {
+    const response = await fetch(`${apiBase}/airlines`);
+    if (!response.ok) {
+      throw new Error("Airline list unavailable");
+    }
+    renderAirlines(await response.json());
+  } catch {
+    airlineSummary.textContent = "Airline helper unavailable; all airlines included.";
+  }
+}
+
+function setPreferredAirlines(airlines) {
+  const selected = new Set(airlines);
+  for (const input of airlinePreferencesRoot.querySelectorAll("input")) {
+    input.checked = selected.has(input.value);
+  }
+  refreshAirlineSummary();
+}
+
+function airlinesForGroups(groupIds) {
+  const ids = new Set(groupIds);
+  return airlineCatalog.groups.filter((group) => ids.has(group.id)).flatMap((group) => group.airlines);
+}
+
+function refreshAirlineSummary() {
+  const selected = selectedPreferredAirlines();
+  airlineSummary.textContent = selected.length
+    ? `Only showing trips operated by: ${selected.join(", ")}`
+    : "All airlines included";
 }
 
 function renderChildren() {
@@ -237,6 +304,7 @@ function collectRequest() {
     returnLateDays: Number(data.get("returnLateDays")),
     minTripDays: Number(data.get("minTripDays")),
     tripFlexDays: Number(data.get("tripFlexDays")),
+    preferredAirlines: selectedPreferredAirlines(),
     overrideWindow: {
       enabled: data.get("overrideEnabled") === "on",
       startDate: data.get("overrideStartDate"),
@@ -410,6 +478,12 @@ function renderProviderNotice(payload) {
   if (payload.searchMeta?.partialErrors?.length) {
     pieces.push(`${payload.searchMeta.partialErrors.length} date pair errors`);
   }
+  if (payload.searchMeta?.airlineFilter?.length) {
+    pieces.push(`Airline filter: ${payload.searchMeta.airlineFilter.join(", ")}`);
+  }
+  if (payload.searchMeta?.filteredByAirlines) {
+    pieces.push(`${payload.searchMeta.filteredByAirlines} results hidden by airline preference`);
+  }
 
   if (pieces.length) {
     const notice = document.createElement("div");
@@ -458,7 +532,7 @@ function populateFreemensWindows(catalog) {
 async function loadFreemensDates() {
   loadFreemensButton.disabled = true;
   loadFreemensButton.textContent = "Loading";
-  renderSchoolStatus("Fetching Freemen's term dates...");
+  renderSchoolStatus("Loading stored Freemen's term dates...");
 
   try {
     const response = await fetch(`${apiBase}/schools/freemens/term-dates`);
@@ -470,13 +544,55 @@ async function loadFreemensDates() {
 
     freemensCatalog = payload;
     populateFreemensWindows(payload);
-    renderSchoolStatus(`Loaded ${payload.holidayWindows.length} holiday windows from ${payload.source} parser.`);
+    renderSchoolStatus(termDateStatusMessage(payload));
   } catch (error) {
     renderSchoolStatus(error.message, true);
   } finally {
     loadFreemensButton.disabled = false;
     loadFreemensButton.textContent = "Load Freemen's dates";
   }
+}
+
+async function refreshFreemensDates() {
+  refreshFreemensButton.disabled = true;
+  refreshFreemensButton.textContent = "Refreshing";
+  renderSchoolStatus("Refreshing Freemen's term dates from the school page...");
+
+  try {
+    const response = await fetch(`${apiBase}/schools/freemens/term-dates/refresh`, {
+      method: "POST"
+    });
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(payload.error || "Could not refresh Freemen's dates");
+    }
+
+    freemensCatalog = payload;
+    populateFreemensWindows(payload);
+    renderSchoolStatus(termDateStatusMessage(payload));
+  } catch (error) {
+    renderSchoolStatus(error.message, true);
+  } finally {
+    refreshFreemensButton.disabled = false;
+    refreshFreemensButton.textContent = "Refresh stored dates";
+  }
+}
+
+function termDateStatusMessage(payload) {
+  const cache = payload.cache || {};
+  const pieces = [`Loaded ${payload.holidayWindows.length} holiday windows`];
+  pieces.push(cache.servedFromCache ? "from storage" : "from school page");
+  if (cache.refreshed) {
+    pieces.push("stored for next time");
+  }
+  if (cache.furthestBreakEndDate) {
+    pieces.push(`furthest break ends ${cache.furthestBreakEndDate}`);
+  }
+  if (cache.refreshFailed) {
+    pieces.push(`refresh failed, using stored copy: ${cache.refreshError}`);
+  }
+  return pieces.join(" · ");
 }
 
 function applyFreemensDates() {
@@ -587,6 +703,22 @@ routePresetsRoot.addEventListener("click", (event) => {
 londonAirportsRoot.addEventListener("change", syncOriginFromAirportChecks);
 homeAirportsButton.addEventListener("click", () => setLondonAirportSelection(["LHR", "LGW"]));
 holidayAirportsButton.addEventListener("click", () => setLondonAirportSelection(londonAirportCodes));
+airlinePreferencesRoot.addEventListener("change", refreshAirlineSummary);
+airlineActionsRoot.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-airline-preset]");
+  if (!button) {
+    return;
+  }
+
+  const preset = button.dataset.airlinePreset;
+  if (preset === "clear") {
+    setPreferredAirlines([]);
+  } else if (preset === "european") {
+    setPreferredAirlines(airlinesForGroups(["european-long-haul", "european-holiday"]));
+  } else {
+    setPreferredAirlines(airlinesForGroups([preset]));
+  }
+});
 
 function setLondonAirportSelection(codes) {
   for (const input of londonAirportsRoot.querySelectorAll("input")) {
@@ -600,10 +732,12 @@ childrenRoot.addEventListener("input", (event) => {
   }
 });
 loadFreemensButton.addEventListener("click", loadFreemensDates);
+refreshFreemensButton.addEventListener("click", refreshFreemensDates);
 applyFreemensButton.addEventListener("click", applyFreemensDates);
 overrideEnabledInput.addEventListener("change", syncOverrideControls);
 overrideStartInput.addEventListener("change", () => {
   overrideEndInput.value = addDaysToIsoDate(overrideStartInput.value, 1);
 });
 loadAirports();
+loadAirlines();
 checkHealth();

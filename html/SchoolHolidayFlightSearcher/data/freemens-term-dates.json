@@ -1,0 +1,165 @@
+{
+  "schoolName": "City of London Freemen's School",
+  "url": "https://freemens.org/parent-hub/term-dates/",
+  "juniorUntilAge": 11,
+  "seniorFromAge": 12,
+  "source": "deterministic",
+  "geminiConfigured": false,
+  "terms": [
+    {
+      "academicYear": "2025-2026",
+      "name": "Summer Term 2026",
+      "starts": "2026-04-16",
+      "ends": {
+        "junior": "2026-07-08",
+        "senior": "2026-07-08"
+      },
+      "halfTerm": {
+        "begins": "2026-05-22",
+        "recommences": "2026-06-01"
+      },
+      "source": "deterministic"
+    },
+    {
+      "academicYear": "2026-2027",
+      "name": "Autumn Term 2026",
+      "starts": "2026-09-03",
+      "ends": {
+        "junior": "2026-12-15",
+        "senior": "2026-12-15"
+      },
+      "halfTerm": {
+        "begins": "2026-10-16",
+        "recommences": "2026-11-02"
+      },
+      "source": "deterministic"
+    },
+    {
+      "academicYear": "2026-2027",
+      "name": "Spring Term 2027",
+      "starts": "2027-01-06",
+      "ends": {
+        "junior": "2027-03-24",
+        "senior": "2027-03-24"
+      },
+      "halfTerm": {
+        "begins": "2027-02-12",
+        "recommences": "2027-02-22"
+      },
+      "source": "deterministic"
+    },
+    {
+      "academicYear": "2026-2027",
+      "name": "Summer Term 2027",
+      "starts": "2027-04-13",
+      "ends": {
+        "junior": "2027-07-07",
+        "senior": "2027-07-07"
+      },
+      "halfTerm": {
+        "begins": "2027-05-28",
+        "recommences": "2027-06-07"
+      },
+      "source": "deterministic"
+    }
+  ],
+  "holidayWindows": [
+    {
+      "id": "summer-term-2026-half-term",
+      "type": "half-term",
+      "label": "Summer 2026 half term",
+      "fromTerm": "Summer Term 2026",
+      "toTerm": "Summer Term 2026",
+      "junior": {
+        "termEnds": "2026-05-22",
+        "termStarts": "2026-06-01"
+      },
+      "senior": {
+        "termEnds": "2026-05-22",
+        "termStarts": "2026-06-01"
+      }
+    },
+    {
+      "id": "summer-term-2026-autumn-term-2026",
+      "type": "term-holiday",
+      "label": "Summer holiday 2026",
+      "fromTerm": "Summer Term 2026",
+      "toTerm": "Autumn Term 2026",
+      "junior": {
+        "termEnds": "2026-07-08",
+        "termStarts": "2026-09-03"
+      },
+      "senior": {
+        "termEnds": "2026-07-08",
+        "termStarts": "2026-09-03"
+      }
+    },
+    {
+      "id": "autumn-term-2026-half-term",
+      "type": "half-term",
+      "label": "Autumn 2026 half term",
+      "fromTerm": "Autumn Term 2026",
+      "toTerm": "Autumn Term 2026",
+      "junior": {
+        "termEnds": "2026-10-16",
+        "termStarts": "2026-11-02"
+      },
+      "senior": {
+        "termEnds": "2026-10-16",
+        "termStarts": "2026-11-02"
+      }
+    },
+    {
+      "id": "autumn-term-2026-spring-term-2027",
+      "type": "term-holiday",
+      "label": "Christmas holiday 2026",
+      "fromTerm": "Autumn Term 2026",
+      "toTerm": "Spring Term 2027",
+      "junior": {
+        "termEnds": "2026-12-15",
+        "termStarts": "2027-01-06"
+      },
+      "senior": {
+        "termEnds": "2026-12-15",
+        "termStarts": "2027-01-06"
+      }
+    },
+    {
+      "id": "spring-term-2027-half-term",
+      "type": "half-term",
+      "label": "Spring 2027 half term",
+      "fromTerm": "Spring Term 2027",
+      "toTerm": "Spring Term 2027",
+      "junior": {
+        "termEnds": "2027-02-12",
+        "termStarts": "2027-02-22"
+      },
+      "senior": {
+        "termEnds": "2027-02-12",
+        "termStarts": "2027-02-22"
+      }
+    },
+    {
+      "id": "spring-term-2027-summer-term-2027",
+      "type": "term-holiday",
+      "label": "Easter holiday 2027",
+      "fromTerm": "Spring Term 2027",
+      "toTerm": "Summer Term 2027",
+      "junior": {
+        "termEnds": "2027-03-24",
+        "termStarts": "2027-04-13"
+      },
+      "senior": {
+        "termEnds": "2027-03-24",
+        "termStarts": "2027-04-13"
+      }
+    }
+  ],
+  "cache": {
+    "servedFromCache": false,
+    "refreshed": true,
+    "refreshReason": "furthest-date-within-threshold",
+    "furthestBreakEndDate": "2027-04-13",
+    "storedAt": "2026-04-27T07:34:44.137Z"
+  }
+}

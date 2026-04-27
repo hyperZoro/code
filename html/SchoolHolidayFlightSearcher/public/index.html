@@ -20,93 +20,136 @@
       </section>
 
       <form id="search-form" class="workspace">
-        <section class="panel route-panel" aria-labelledby="route-heading">
-          <div class="panel-heading">
-            <h2 id="route-heading">Route</h2>
-          </div>
-          <div class="field-grid">
-            <label>
-              <span>From</span>
-              <input name="origin" value="LON" list="airport-options" autocomplete="off" required>
-            </label>
-            <label>
-              <span>To</span>
-              <input name="destination" value="CAN" list="airport-options" autocomplete="off" required>
-            </label>
-            <label>
-              <span>Adults</span>
-              <input name="adults" type="number" min="1" value="2" required>
-            </label>
-          </div>
-          <datalist id="airport-options"></datalist>
-          <div id="route-presets" class="route-presets" aria-label="Route presets"></div>
-          <div class="airport-tools">
-            <div>
-              <span class="tool-label">London departure airports</span>
-              <div id="london-airports" class="airport-checks"></div>
+        <div class="configuration-column">
+          <div class="left-stack">
+          <!-- Route Panel -->
+          <section class="panel route-panel" aria-labelledby="route-heading">
+            <div class="panel-heading static-heading">
+              <h2 id="route-heading">Route</h2>
+              <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
             </div>
-            <button id="home-airports" class="secondary-action compact-action" type="button">LHR + LGW</button>
-            <button id="holiday-airports" class="secondary-action compact-action" type="button">All London</button>
-          </div>
-          <div id="airport-summary" class="airport-summary" aria-live="polite"></div>
-        </section>
+            <div class="field-grid">
+              <label>
+                <span>From</span>
+                <input name="origin" value="LON" list="airport-options" autocomplete="off" required>
+              </label>
+              <label>
+                <span>To</span>
+                <input name="destination" value="CAN" list="airport-options" autocomplete="off" required>
+              </label>
+              <label>
+                <span>Adults</span>
+                <input name="adults" type="number" min="1" value="2" required>
+              </label>
+            </div>
+            <datalist id="airport-options"></datalist>
+            <div id="route-presets" class="route-presets" aria-label="Route presets"></div>
+            
+            <details class="advanced-details">
+              <summary>
+                <span>Advanced Airport & Airline Options</span>
+                <svg class="chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+              </summary>
+              <div class="advanced-content">
+                <div class="airport-tools">
+                  <div>
+                    <span class="tool-label">London departure airports</span>
+                    <div id="london-airports" class="airport-checks"></div>
+                  </div>
+                  <button id="home-airports" class="secondary-action compact-action" type="button">LHR + LGW</button>
+                  <button id="holiday-airports" class="secondary-action compact-action" type="button">All London</button>
+                </div>
+                <div id="airport-summary" class="airport-summary" aria-live="polite"></div>
+                <div class="airline-tools">
+                  <div class="airline-tools-head">
+                    <span class="tool-label">Preferred airlines</span>
+                    <div class="airline-actions" aria-label="Airline presets">
+                      <button class="secondary-action compact-action" type="button" data-airline-preset="chinese">Chinese</button>
+                      <button class="secondary-action compact-action" type="button" data-airline-preset="ba">BA</button>
+                      <button class="secondary-action compact-action" type="button" data-airline-preset="european">European</button>
+                      <button class="secondary-action compact-action" type="button" data-airline-preset="clear">All</button>
+                    </div>
+                  </div>
+                  <div id="airline-preferences" class="airline-checks"></div>
+                  <div id="airline-summary" class="airport-summary" aria-live="polite">All airlines included</div>
+                </div>
+              </div>
+            </details>
+          </section>
 
-        <section class="panel" aria-labelledby="children-heading">
-          <div class="panel-heading">
-            <h2 id="children-heading">Children</h2>
+          <!-- Flexibility Panel -->
+          <details class="panel controls-panel">
+            <summary class="panel-heading">
+              <h2 id="flex-heading">Flexibility Settings</h2>
+              <svg class="chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            </summary>
+            <div class="panel-content">
+              <div class="override-tools">
+                <label class="toggle-line">
+                  <input id="override-enabled" name="overrideEnabled" type="checkbox">
+                  <span>Override school window</span>
+                </label>
+                <label>
+                  <span>Override start</span>
+                  <input id="override-start" name="overrideStartDate" type="date" disabled>
+                </label>
+                <label>
+                  <span>Override end</span>
+                  <input id="override-end" name="overrideEndDate" type="date" disabled>
+                </label>
+              </div>
+              <div class="field-grid">
+                <label>
+                  <span>Leave early days</span>
+                  <input name="leaveEarlyDays" type="number" min="0" max="14" value="0">
+                </label>
+                <label>
+                  <span>Return late days</span>
+                  <input name="returnLateDays" type="number" min="0" max="14" value="0">
+                </label>
+                <label>
+                  <span>Minimum trip days</span>
+                  <input name="minTripDays" type="number" min="2" max="90" value="21">
+                </label>
+                <label>
+                  <span>Extra flexible days</span>
+                  <input name="tripFlexDays" type="number" min="0" max="30" value="7">
+                </label>
+              </div>
+            </div>
+          </details>
           </div>
-          <div class="school-tools">
-            <button id="load-freemens" class="secondary-action" type="button">Load Freemen's dates</button>
-            <label>
-              <span>Holiday window</span>
-              <select id="freemens-window" disabled>
-                <option value="">Load dates first</option>
-              </select>
-            </label>
-            <button id="apply-freemens" class="secondary-action" type="button" disabled>Apply to children</button>
-            <span id="school-status" class="tool-status" aria-live="polite"></span>
-          </div>
-          <div id="children" class="children-grid"></div>
-        </section>
 
-        <section class="panel controls-panel" aria-labelledby="flex-heading">
-          <div class="panel-heading">
-            <h2 id="flex-heading">Flexibility</h2>
+          <div class="right-stack">
+          <!-- Children Panel -->
+          <details class="panel" open>
+            <summary class="panel-heading">
+              <h2 id="children-heading">Children & School Dates</h2>
+              <svg class="chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            </summary>
+            <div class="panel-content">
+              <div class="school-tools">
+                <button id="load-freemens" class="secondary-action" type="button">Load Freemen's dates</button>
+                <button id="refresh-freemens" class="secondary-action" type="button">Refresh stored dates</button>
+                <label>
+                  <span>Holiday window</span>
+                  <select id="freemens-window" disabled>
+                    <option value="">Load dates first</option>
+                  </select>
+                </label>
+                <button id="apply-freemens" class="secondary-action" type="button" disabled>Apply to children</button>
+                <span id="school-status" class="tool-status" aria-live="polite"></span>
+              </div>
+              <div id="children" class="children-grid"></div>
+            </div>
+          </details>
+
+          <button class="primary-action submit-action" type="submit">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+             Search flights
+          </button>
           </div>
-          <div class="override-tools">
-            <label class="toggle-line">
-              <input id="override-enabled" name="overrideEnabled" type="checkbox">
-              <span>Override school window</span>
-            </label>
-            <label>
-              <span>Override start</span>
-              <input id="override-start" name="overrideStartDate" type="date" disabled>
-            </label>
-            <label>
-              <span>Override end</span>
-              <input id="override-end" name="overrideEndDate" type="date" disabled>
-            </label>
-          </div>
-          <div class="field-grid">
-            <label>
-              <span>Leave early days</span>
-              <input name="leaveEarlyDays" type="number" min="0" max="14" value="0">
-            </label>
-            <label>
-              <span>Return late days</span>
-              <input name="returnLateDays" type="number" min="0" max="14" value="0">
-            </label>
-            <label>
-              <span>Minimum trip days</span>
-              <input name="minTripDays" type="number" min="2" max="90" value="21">
-            </label>
-            <label>
-              <span>Extra flexible days</span>
-              <input name="tripFlexDays" type="number" min="0" max="30" value="7">
-            </label>
-          </div>
-          <button class="primary-action" type="submit">Search flights</button>
-        </section>
+        </div>
       </form>
 
       <section class="results-layout">

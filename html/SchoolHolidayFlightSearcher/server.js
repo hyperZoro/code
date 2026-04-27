@@ -6,8 +6,9 @@ const { loadDotEnv } = require("./src/env");
 const { buildSearchResponse } = require("./src/domain");
 loadDotEnv();
 const { providerHealth, searchFlights } = require("./src/providers/flightProvider");
-const { fetchFreemensTermDates } = require("./src/schools/freemens");
+const { getFreemensTermDates } = require("./src/schools/termDateCache");
 const { airportPayload } = require("./src/airports");
+const { airlinePayload } = require("./src/airlines");
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -97,13 +98,24 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === "GET" && url.pathname === "/api/schools/freemens/term-dates") {
-      const response = await fetchFreemensTermDates();
+      const response = await getFreemensTermDates();
+      sendJson(res, 200, response);
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/schools/freemens/term-dates/refresh") {
+      const response = await getFreemensTermDates({ forceRefresh: true });
       sendJson(res, 200, response);
       return;
     }
 
     if (req.method === "GET" && url.pathname === "/api/airports") {
       sendJson(res, 200, airportPayload());
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/airlines") {
+      sendJson(res, 200, airlinePayload());
       return;
     }
 

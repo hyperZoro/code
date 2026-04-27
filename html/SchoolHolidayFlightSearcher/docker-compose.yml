@@ -7,6 +7,8 @@ services:
       FLIGHT_PROVIDER: ${FLIGHT_PROVIDER:-mock}
       PORT: 3000
       HOST: 0.0.0.0
+      DATA_DIR: /app/data
+      TERM_CACHE_REFRESH_DAYS: ${TERM_CACHE_REFRESH_DAYS:-183}
       SERPAPI_API_KEY: ${SERPAPI_API_KEY:-}
       SERPAPI_CURRENCY: ${SERPAPI_CURRENCY:-GBP}
       SERPAPI_GOOGLE_COUNTRY: ${SERPAPI_GOOGLE_COUNTRY:-uk}
@@ -21,3 +23,5 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     ports:
       - "3010:3000"
+    volumes:
+      - ./data:/app/data

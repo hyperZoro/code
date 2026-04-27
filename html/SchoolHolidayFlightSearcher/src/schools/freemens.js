@@ -176,7 +176,7 @@ function buildHolidayWindows(terms) {
   return windows.sort((a, b) => a.junior.termEnds.localeCompare(b.junior.termEnds));
 }
 
-async function fetchFreemensTermDates() {
+async function fetchFreemensTermDatesLive() {
   const response = await fetch(FREEMENS_TERM_DATES_URL, {
     headers: {
       "user-agent": "SchoolHolidayFlightSearcher/0.1 personal-use"
@@ -219,7 +219,7 @@ async function fetchFreemensTermDates() {
 module.exports = {
   FREEMENS_TERM_DATES_URL,
   buildHolidayWindows,
-  fetchFreemensTermDates,
+  fetchFreemensTermDatesLive,
   parseFreemensTermDates,
   stripHtml
 };
